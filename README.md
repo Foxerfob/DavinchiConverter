@@ -19,3 +19,8 @@ Convert audio for import in Davinchi Resolve
 ```bash
 davinchi-audio-import <file1> [<file2> ...]
 ```
+
+Convert video for export from Davinchi Resolve
+```bash
+davinchi-video-export <file1> [<file2> ...]
+```

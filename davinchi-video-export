@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# Check if FFmpeg is installed
+if ! command -v ffmpeg &> /dev/null; then
+    echo "Error: FFmpeg is not installed. Please install FFmpeg before using this script."
+    exit 1
+fi
+
+# Check input parameters
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <file1> [<file2> ...]"
+    echo "Supported formats: mov, mp4, mkv, avi"
+    exit 1
+fi
+
+# Conversion settings
+OUTPUT_DIR="videos-export"
+CODEC="libx264"
+PRESET="medium"
+CRF="23"
+AUDIO_CODEC="aac"
+
+# Create output directory
+mkdir -p "$OUTPUT_DIR"
+
+# Convert each file
+for input_file in "$@"; do
+    if [ ! -f "$input_file" ]; then
+        echo "File not found: $input_file"
+        continue
+    fi
+    
+    # Generate output filename
+    filename=$(basename -- "$input_file")
+    filename_noext="${filename%.*}"
+    output_file="${OUTPUT_DIR}/${filename_noext}.mp4"
+    
+    # Perform conversion
+    echo "Converting: $filename -> ${output_file}"
+    
+    ffmpeg -i "$input_file" \
+        -c:v $CODEC \
+        -preset $PRESET \
+        -crf $CRF \
+        -c:a $AUDIO_CODEC \
+        -movflags +faststart \
+        -y "$output_file" 2> /dev/null
+    
+    # Check conversion result
+    if [ $? -eq 0 ]; then
+        echo "Success: $output_file"
+    else
+        echo "Error converting: $input_file"
+        rm -f "$output_file" &> /dev/null
+    fi
+done
+
+echo "Done! Results saved in '$OUTPUT_DIR' folder"
