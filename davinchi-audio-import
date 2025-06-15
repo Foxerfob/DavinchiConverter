@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# Check for FFmpeg installation
+if ! command -v ffmpeg &> /dev/null; then
+    echo "Error: FFmpeg is not installed. Please install FFmpeg before using this script."
+    exit 1
+fi
+
+# Check input parameters
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <file1> [<file2> ...]"
+    echo "Supported formats: mp3, flac, wav, ogg, m4a, aac, wma, ac3, aiff"
+    exit 1
+fi
+
+# Conversion parameters
+OUTPUT_DIR="converted-audio"
+SAMPLE_RATE="48000"
+BIT_DEPTH="24"
+CODEC="pcm_s24le"
+FORMAT="wav"
+
+# Create output directory
+mkdir -p "$OUTPUT_DIR"
+
+# Convert each file
+for input_file in "$@"; do
+    if [ ! -f "$input_file" ]; then
+        echo "File not found: $input_file"
+        continue
+    fi
+    
+    # Generate output filename
+    filename=$(basename -- "$input_file")
+    filename_noext="${filename%.*}"
+    output_file="${OUTPUT_DIR}/${filename_noext}_converted.wav"
+    
+    # Perform conversion
+    echo "Converting: $filename -> ${output_file}"
+    
+    ffmpeg -i "$input_file" \
+        -vn \
+        -c:a $CODEC \
+        -ar $SAMPLE_RATE \
+        -sample_fmt s32 \
+        -map_metadata 0 \
+        -fflags +bitexact \
+        -y "$output_file" 2> /dev/null
+    
+    # Check result
+    if [ $? -eq 0 ]; then
+        echo "Success: $output_file"
+    else
+        echo "Error converting: $input_file"
+        rm -f "$output_file" &> /dev/null
+    fi
+done
+
+echo "Done! Results saved in '$OUTPUT_DIR' folder"
